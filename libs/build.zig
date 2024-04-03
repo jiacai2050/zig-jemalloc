@@ -15,10 +15,10 @@ pub fn build(b: *Build) void {
     b.installArtifact(lib);
 }
 
-fn gen_header(b: *std.Build) !void {
+fn compileStaticLib(b: *std.Build) !void {
     const argv = [_][]const u8{
         "bash",
-        PREFIX ++ "/../config.sh",
+        PREFIX ++ "/../compile.sh",
         "world",
     };
     var child = std.process.Child.init(&argv, b.allocator);
@@ -40,7 +40,7 @@ fn gen_header(b: *std.Build) !void {
 pub fn create(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) !void {
     _ = target;
     _ = optimize;
-    try gen_header(b);
+    try compileStaticLib(b);
 }
 
 // TODO: this doesn't work now

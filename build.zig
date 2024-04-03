@@ -13,7 +13,7 @@ pub fn build(b: *std.Build) !void {
     });
     if (link_vendor) {
         try @import("libs/build.zig").create(b, target, optimize);
-        module.addLibraryPath("libs/jemalloc/lib/libjemalloc.a");
+        module.addLibraryPath(.{ .path = "libs/jemalloc/lib/libjemalloc.a" });
     } else {
         module.linkSystemLibrary("jemalloc", .{});
     }
