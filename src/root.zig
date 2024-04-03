@@ -1,6 +1,5 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const testing = std.testing;
 const c = @cImport({
     @cInclude("jemalloc/jemalloc.h");
 });
@@ -16,8 +15,8 @@ pub const jemalloctor = std.mem.Allocator{
 
 fn alloc(_: *anyopaque, n: usize, log2_align: u8, return_address: usize) ?[*]u8 {
     _ = return_address;
-    const alignment = @as(usize, 1) << @as(Allocator.Log2Align, @intCast(log2_align));
 
+    const alignment = @as(usize, 1) << @as(Allocator.Log2Align, @intCast(log2_align));
     const ptr = c.aligned_alloc(alignment, n) orelse return null;
     return @ptrCast(ptr);
 }
@@ -35,10 +34,9 @@ fn resize(
 }
 
 fn free(_: *anyopaque, slice: []u8, log2_buf_align: u8, return_address: usize) void {
-    _ = slice;
     _ = log2_buf_align;
     _ = return_address;
-    // c.free(slice.ptr);
+    c.free(slice.ptr);
 }
 
 test "basic alloc" {
