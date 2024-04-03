@@ -1,0 +1,8 @@
+#+TITLE: zig-jemalloc
+#+DATE: 2024-04-03T16:31:20+0800
+#+LASTMOD: 2024-04-03T16:37:03+0800
+#+AUTHOR: Jiacai Liu
+
+[[https://github.com/jiacai2050/zig-jemalloc/actions/workflows/CI.yml][https://github.com/jiacai2050/zig-jemalloc/actions/workflows/CI.yml/badge.svg]]
+
+Zig memory allocator based on [[https://jemalloc.net/][jemalloc]].
