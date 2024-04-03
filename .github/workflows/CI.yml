@@ -35,11 +35,7 @@ jobs:
       - name: Install deps(Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: |
-          sudo apt-get install -y libjemalloc-dev valgrind
-      - name: Install deps(macOS)
-        if: matrix.os == 'macos-latest'
-        run: |
-          brew install jemalloc
+          sudo apt-get install -y valgrind
       - name: Run UT
         run: |
           zig build -Dcpu=baseline --verbose
