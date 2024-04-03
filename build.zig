@@ -12,6 +12,9 @@ pub fn build(b: *std.Build) !void {
         .link_libc = true,
     });
     if (link_vendor) {
+        b.addSystemCommand(&.{
+            "bash", "libs/jemalloc/config.sh",
+        });
         const jemalloc_lib = try @import("libs/build.zig").create(b, target, optimize);
         module.linkLibrary(jemalloc_lib);
     } else {

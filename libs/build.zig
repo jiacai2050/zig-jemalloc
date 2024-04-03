@@ -15,12 +15,35 @@ pub fn build(b: *Build) void {
     b.installArtifact(lib);
 }
 
+fn gen_header(b: *std.Build) !void {
+    const argv = [_][]const u8{
+        "bash",
+        PREFIX ++ "/../config.sh",
+        "world",
+    };
+    var child = std.process.Child.init(&argv, b.allocator);
+    const term = try child.spawnAndWait();
+    switch (term) {
+        .Exited => |code| {
+            if (code != 0) {
+                std.debug.print("gen header failed, ret:{any}\n", .{term});
+                return error.GenConfig;
+            }
+        },
+        else => {
+            std.debug.print("gen header failed, unexpected ret:{any}\n", .{term});
+            return error.GenConfig;
+        },
+    }
+}
+
 pub fn create(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) !*std.Build.Step.Compile {
     const lib = b.addStaticLibrary(.{
         .name = "jemalloc",
         .target = target,
         .optimize = optimize,
     });
+    try gen_header(b);
     var srcs = std.ArrayList([]const u8).init(b.allocator);
     const dir = try std.fs.cwd().openDir(PREFIX ++ "/src", .{});
     var iter = dir.iterate();
