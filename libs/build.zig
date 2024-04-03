@@ -37,13 +37,19 @@ fn gen_header(b: *std.Build) !void {
     }
 }
 
-pub fn create(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) !*std.Build.Step.Compile {
+pub fn create(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) !void {
+    _ = target;
+    _ = optimize;
+    try gen_header(b);
+}
+
+// TODO: this doesn't work now
+pub fn createStaticLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) !*std.Build.Step.Compile {
     const lib = b.addStaticLibrary(.{
         .name = "jemalloc",
         .target = target,
         .optimize = optimize,
     });
-    try gen_header(b);
     var srcs = std.ArrayList([]const u8).init(b.allocator);
     const dir = try std.fs.cwd().openDir(PREFIX ++ "/src", .{ .iterate = true });
     var iter = dir.iterate();

@@ -12,8 +12,8 @@ pub fn build(b: *std.Build) !void {
         .link_libc = true,
     });
     if (link_vendor) {
-        const jemalloc_lib = try @import("libs/build.zig").create(b, target, optimize);
-        module.linkLibrary(jemalloc_lib);
+        try @import("libs/build.zig").create(b, target, optimize);
+        module.addLibraryPath("libs/jemalloc/lib/libjemalloc.a");
     } else {
         module.linkSystemLibrary("jemalloc", .{});
     }
