@@ -1,8 +1,30 @@
 #+TITLE: zig-jemalloc
 #+DATE: 2024-04-03T16:31:20+0800
-#+LASTMOD: 2024-04-03T16:37:03+0800
+#+LASTMOD: 2024-04-03T17:45:05+0800
 #+AUTHOR: Jiacai Liu
 
 [[https://github.com/jiacai2050/zig-jemalloc/actions/workflows/CI.yml][https://github.com/jiacai2050/zig-jemalloc/actions/workflows/CI.yml/badge.svg]]
 
 Zig memory allocator based on [[https://jemalloc.net/][jemalloc]].
+
+* Usage
+#+begin_src shell
+zig fetch --save=jemalloc https://github.com/jiacai2050/zig-jemalloc/archive/${COMMIT}.tar.gz
+#+end_src
+
+Replace ~${COMMIT}~ with a real one, then in your =build.zig=, import the module like this:
+#+begin_src zig
+const dep_jemalloc = b.dependency("jemalloc", .{});
+exe.root_module.addImport("jemalloc", dep_jemalloc.module("jemalloc"));
+exe.linkLibC();
+// brew install jemalloc
+// apt-get install libjemalloc-dev
+exe.linkSystemLibrary("jemalloc");
+#+end_src
+
+Then in you =main.zig=, initialize like this:
+
+#+begin_src zig
+const jemalloc = @import("jemalloc");
+const allocator = jemalloc.allocator;
+#+end_src
