@@ -77,7 +77,7 @@ pub fn create(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.bui
     lib.addIncludePath(.{ .path = PREFIX ++ "/include" });
     lib.installHeader(PREFIX ++ "/include/jemalloc/jemalloc.h", "jemalloc/jemalloc.h");
     lib.linkLibC();
-    lib.defineCMacro("JEMALLOC_ENABLE_CXX", "0");
+    // lib.defineCMacro("JEMALLOC_ENABLE_CXX", "0");
     lib.defineCMacro("_REENTRANT", null);
     lib.defineCMacro("JEMALLOC_NO_PRIVATE_NAMESPACE", "1");
     return lib;
