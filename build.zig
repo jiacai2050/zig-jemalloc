@@ -4,15 +4,13 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const lib = b.addStaticLibrary(.{
-        .name = "zig-jemalloc",
+    const module = b.addModule("jemalloc", .{
         .root_source_file = .{ .path = "src/root.zig" },
         .target = target,
         .optimize = optimize,
+        .link_libc = true,
     });
-
-    lib.linkSystemLibrary("jemalloc");
-    lib.linkLibC();
+    module.linkSystemLibrary("jemalloc", .{});
 
     const lib_unit_tests = b.addTest(.{
         .name = "jemalloc-tests",
@@ -20,8 +18,9 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
-    lib_unit_tests.linkSystemLibrary("jemalloc");
+    lib_unit_tests.root_module.addImport("jemalloc", module);
     lib_unit_tests.linkLibC();
+    lib_unit_tests.linkSystemLibrary("jemalloc");
     b.installArtifact(lib_unit_tests);
 
     const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);

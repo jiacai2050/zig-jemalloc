@@ -4,7 +4,8 @@ const c = @cImport({
     @cInclude("jemalloc/jemalloc.h");
 });
 
-pub const jemalloctor = std.mem.Allocator{
+/// An allocator based on [jemalloc](https://jemalloc.net/jemalloc.3.html)
+pub const allocator = std.mem.Allocator{
     .ptr = undefined,
     .vtable = &.{
         .alloc = alloc,
@@ -12,6 +13,20 @@ pub const jemalloctor = std.mem.Allocator{
         .free = free,
     },
 };
+
+/// Collect stats info into writer.
+/// When opts contains `J`, stats is in JSON format.
+pub fn collectMallocStats(wtr: anytype, opts: [:0]const u8) void {
+    const context = @constCast(&wtr);
+    c.malloc_stats_print(struct {
+        fn f(ctx: ?*anyopaque, msg: [*c]const u8) callconv(.C) void {
+            const p: *@TypeOf(wtr) = @alignCast(@ptrCast(ctx));
+            p.writeAll(std.mem.span(msg)) catch |e| {
+                std.log.err("call malloc_stats_print cb failed, err:{any}\n", .{e});
+            };
+        }
+    }.f, context, opts);
+}
 
 fn alloc(_: *anyopaque, n: usize, log2_align: u8, return_address: usize) ?[*]u8 {
     _ = return_address;
@@ -40,13 +55,18 @@ fn free(_: *anyopaque, slice: []u8, log2_buf_align: u8, return_address: usize) v
 }
 
 test "basic alloc" {
-    const ptr = try jemalloctor.create(struct { a: i8, b: u64 });
+    const ptr = try allocator.create(struct { a: i8, b: u64 });
+    allocator.destroy(ptr);
 
-    jemalloctor.destroy(ptr);
+    var stats = std.ArrayList(u8).init(allocator);
+    defer stats.deinit();
+
+    collectMallocStats(stats.writer(), "");
+    try std.testing.expect(stats.items.len > 0);
 }
 
 test "alloc ArrayList" {
-    var lst = std.ArrayList(usize).init(jemalloctor);
+    var lst = std.ArrayList(usize).init(allocator);
     defer lst.deinit();
 
     for (0..100_000) |i| {
