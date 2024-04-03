@@ -35,9 +35,10 @@ fn resize(
 }
 
 fn free(_: *anyopaque, slice: []u8, log2_buf_align: u8, return_address: usize) void {
+    _ = slice;
     _ = log2_buf_align;
     _ = return_address;
-    c.free(slice.ptr);
+    // c.free(slice.ptr);
 }
 
 test "basic alloc" {
