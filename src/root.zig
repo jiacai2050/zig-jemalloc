@@ -18,7 +18,7 @@ pub const allocator = std.mem.Allocator{
 /// When opts contains `J`, stats is in JSON format.
 pub fn collectMallocStats(wtr: anytype, opts: ?[:0]const u8) void {
     const context = @constCast(&wtr);
-    c.malloc_stats_print(struct {
+    c.je_malloc_stats_print(struct {
         fn f(ctx: ?*anyopaque, msg: [*c]const u8) callconv(.C) void {
             const p: *@TypeOf(wtr) = @alignCast(@ptrCast(ctx));
             p.writeAll(std.mem.span(msg)) catch |e| {
@@ -32,7 +32,7 @@ fn alloc(_: *anyopaque, n: usize, log2_align: u8, return_address: usize) ?[*]u8 
     _ = return_address;
 
     const alignment = @as(usize, 1) << @as(Allocator.Log2Align, @intCast(log2_align));
-    const ptr = c.aligned_alloc(alignment, n) orelse return null;
+    const ptr = c.je_aligned_alloc(alignment, n) orelse return null;
     return @ptrCast(ptr);
 }
 
@@ -45,13 +45,13 @@ fn resize(
 ) bool {
     _ = log2_buf_align;
     _ = return_address;
-    return c.malloc_usable_size(buf_unaligned.ptr) >= new_size;
+    return c.je_malloc_usable_size(buf_unaligned.ptr) >= new_size;
 }
 
 fn free(_: *anyopaque, slice: []u8, log2_buf_align: u8, return_address: usize) void {
     _ = log2_buf_align;
     _ = return_address;
-    c.free(slice.ptr);
+    c.je_free(slice.ptr);
 }
 
 test "basic alloc" {
