@@ -45,7 +45,7 @@ pub fn create(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.bui
     });
     try gen_header(b);
     var srcs = std.ArrayList([]const u8).init(b.allocator);
-    const dir = try std.fs.cwd().openDir(PREFIX ++ "/src", .{});
+    const dir = try std.fs.cwd().openDir(PREFIX ++ "/src", .{ .iterate = true });
     var iter = dir.iterate();
     while (try iter.next()) |entry| {
         if (entry.kind != .file) {

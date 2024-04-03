@@ -26,6 +26,7 @@ pub fn build(b: *std.Build) !void {
     });
     lib_unit_tests.root_module.addImport("jemalloc", module);
     lib_unit_tests.linkLibC();
+    lib_unit_tests.addIncludePath(.{ .path = "libs/jemalloc/include" });
     b.installArtifact(lib_unit_tests);
 
     const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
