@@ -16,7 +16,7 @@ pub const allocator = std.mem.Allocator{
 
 /// Collect stats info into writer.
 /// When opts contains `J`, stats is in JSON format.
-pub fn collectMallocStats(wtr: anytype, opts: [:0]const u8) void {
+pub fn collectMallocStats(wtr: anytype, opts: ?[:0]const u8) void {
     const context = @constCast(&wtr);
     c.malloc_stats_print(struct {
         fn f(ctx: ?*anyopaque, msg: [*c]const u8) callconv(.C) void {
@@ -25,7 +25,7 @@ pub fn collectMallocStats(wtr: anytype, opts: [:0]const u8) void {
                 std.log.err("call malloc_stats_print cb failed, err:{any}\n", .{e});
             };
         }
-    }.f, context, opts);
+    }.f, context, if (opts) |v| v else null);
 }
 
 fn alloc(_: *anyopaque, n: usize, log2_align: u8, return_address: usize) ?[*]u8 {
@@ -61,7 +61,7 @@ test "basic alloc" {
     var stats = std.ArrayList(u8).init(allocator);
     defer stats.deinit();
 
-    collectMallocStats(stats.writer(), "");
+    collectMallocStats(stats.writer(), null);
     try std.testing.expect(stats.items.len > 0);
 }
 
