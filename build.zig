@@ -1,8 +1,9 @@
 const std = @import("std");
 
-pub fn build(b: *std.Build) void {
+pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+    const link_vendor = b.option(bool, "link_vendor", "Whether link to vendored jemalloc (default: true)") orelse true;
 
     const module = b.addModule("jemalloc", .{
         .root_source_file = .{ .path = "src/root.zig" },
@@ -10,7 +11,12 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
         .link_libc = true,
     });
-    module.linkSystemLibrary("jemalloc", .{});
+    if (link_vendor) {
+        const jemalloc_lib = try @import("libs/build.zig").create(b, target, optimize);
+        module.linkLibrary(jemalloc_lib);
+    } else {
+        module.linkSystemLibrary("jemalloc", .{});
+    }
 
     const lib_unit_tests = b.addTest(.{
         .name = "jemalloc-tests",
