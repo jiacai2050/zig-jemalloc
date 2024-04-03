@@ -1,6 +1,6 @@
 #+TITLE: zig-jemalloc
 #+DATE: 2024-04-03T16:31:20+0800
-#+LASTMOD: 2024-04-03T20:52:10+0800
+#+LASTMOD: 2024-04-03T23:43:34+0800
 #+AUTHOR: Jiacai Liu
 
 [[https://github.com/jiacai2050/zig-jemalloc/actions/workflows/CI.yml][https://github.com/jiacai2050/zig-jemalloc/actions/workflows/CI.yml/badge.svg]]
@@ -19,7 +19,7 @@ exe.root_module.addImport("jemalloc", dep_jemalloc.module("jemalloc"));
 exe.linkLibC();
 #+end_src
 
-This library will link to a vendored jemalloc(5.3.0) by default, you can disable it and link to system-wide with this:
+This library will link to a vendored [[https://github.com/jemalloc/jemalloc/releases/tag/5.3.0][jemalloc(5.3.0)]] by default, you can disable it and link to system-wide with this:
 #+begin_src zig
 const dep_jemalloc = b.dependency("jemalloc", .{ .link_vendor = false });
 // brew install jemalloc

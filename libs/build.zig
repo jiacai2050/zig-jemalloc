@@ -18,7 +18,7 @@ pub fn build(b: *Build) void {
 fn compileStaticLib(b: *std.Build) !void {
     const argv = [_][]const u8{
         "bash",
-        PREFIX ++ "/../compile.sh",
+        b.pathFromRoot(PREFIX ++ "/../compile.sh"),
         "world",
     };
     var child = std.process.Child.init(&argv, b.allocator);
