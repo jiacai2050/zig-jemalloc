@@ -34,4 +34,23 @@ pub fn build(b: *std.Build) !void {
 
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_lib_unit_tests.step);
+
+    try buildBenchmark(b, "basic", target, optimize, module);
+}
+
+fn buildBenchmark(
+    b: *std.Build,
+    comptime name: []const u8,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+    jemalloc_module: *std.Build.Module,
+) !void {
+    const exe = b.addExecutable(.{
+        .name = name,
+        .root_source_file = .{ .path = "benchmark/" ++ name ++ ".zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+    exe.root_module.addImport("jemalloc", jemalloc_module);
+    b.installArtifact(exe);
 }

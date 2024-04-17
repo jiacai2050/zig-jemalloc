@@ -69,3 +69,20 @@ test "alloc ArrayList" {
         try lst.append(i);
     }
 }
+
+test "realloc" {
+    const size = 5;
+    const ptr: [*]u8 = @ptrCast(c.je_realloc(null, size).?);
+    std.mem.copyForwards(u8, ptr[0..size], "hello");
+    try std.testing.expectEqualStrings("hello", ptr[0..size]);
+
+    // in-place realloc
+    const usable_size = c.je_malloc_usable_size(ptr);
+    const ptr2: [*]u8 = @ptrCast(c.je_realloc(ptr, usable_size - size).?);
+    try std.testing.expectEqual(ptr2, ptr);
+
+    // out-of-place realloc
+    const ptr3: [*]u8 = @ptrCast(c.je_realloc(ptr2, usable_size + 1).?);
+    try std.testing.expectEqualStrings("hello", ptr3[0..size]);
+    try std.testing.expect(ptr3 != ptr2);
+}
