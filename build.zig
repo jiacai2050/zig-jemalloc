@@ -1,5 +1,13 @@
 const std = @import("std");
 
+fn isLinux(target: std.Target) bool {
+    return target.os.tag == .linux;
+}
+
+fn is64bit(target: std.Target) bool {
+    return target.cpu.arch == .x86_64 or target.cpu.arch.isAARCH64();
+}
+
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -50,6 +58,8 @@ fn buildStaticLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std
         .optimize = optimize,
         .link_libc = true,
     });
+    const is_darwin = target.result.isDarwin();
+    const is_linux = isLinux(target.result);
     // const config_step = b.addSystemCommand(&.{
     //     b.pathFromRoot("config.sh"),
     //     dep.path("").getPath(b),
@@ -78,6 +88,10 @@ fn buildStaticLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std
             continue;
         }
         if (std.mem.endsWith(u8, entry.name, ".c")) {
+            // This source file is for zones on Darwin (OS X).
+            if (std.mem.eql(u8, entry.name, "zone.c") and !is_darwin) {
+                continue;
+            }
             const path = try std.fmt.allocPrint(b.allocator, "src/{s}", .{entry.name});
             lib.addCSourceFile(.{
                 .file = dep.path(path),
@@ -169,21 +183,20 @@ fn buildStaticLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std
             .JEMALLOC_GCC_SYNC_ATOMICS = {},
             .JEMALLOC_GCC_U8_SYNC_ATOMICS = {},
             .JEMALLOC_HAVE_BUILTIN_CLZ = {},
-            .JEMALLOC_OS_UNFAIR_LOCK = {},
-            .JEMALLOC_USE_SYSCALL = null,
+            .JEMALLOC_OS_UNFAIR_LOCK = if (is_darwin) {} else null,
+            .JEMALLOC_USE_SYSCALL = if (is_linux) {} else null,
             .JEMALLOC_HAVE_SECURE_GETENV = null,
-            .JEMALLOC_HAVE_ISSETUGID = {},
+            .JEMALLOC_HAVE_ISSETUGID = if (is_darwin) {} else null,
             .JEMALLOC_HAVE_PTHREAD_ATFORK = {},
             .JEMALLOC_HAVE_PTHREAD_SETNAME_NP = null,
-            .JEMALLOC_HAVE_PTHREAD_GETNAME_NP = {},
+            .JEMALLOC_HAVE_PTHREAD_GETNAME_NP = if (is_darwin) {} else null,
             .JEMALLOC_HAVE_PTHREAD_GET_NAME_NP = null,
-            .JEMALLOC_HAVE_CLOCK_MONOTONIC_COARSE = null,
-
-            .JEMALLOC_HAVE_CLOCK_MONOTONIC = null,
-            .JEMALLOC_HAVE_MACH_ABSOLUTE_TIME = {},
+            .JEMALLOC_HAVE_CLOCK_MONOTONIC_COARSE = if (is_linux) {} else null,
+            .JEMALLOC_HAVE_CLOCK_MONOTONIC = if (is_linux) {} else null,
+            .JEMALLOC_HAVE_MACH_ABSOLUTE_TIME = if (is_darwin) {} else null,
             .JEMALLOC_HAVE_CLOCK_REALTIME = {},
             .JEMALLOC_MALLOC_THREAD_CLEANUP = null,
-            .JEMALLOC_THREADED_INIT = null,
+            .JEMALLOC_THREADED_INIT = if (is_linux) {} else null,
             .JEMALLOC_MUTEX_INIT_CB = null,
             .JEMALLOC_TLS_MODEL = .@"__attribute__((tls_model(\"initial-exec\")))",
             .JEMALLOC_DEBUG = null,
@@ -193,7 +206,7 @@ fn buildStaticLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std
             .JEMALLOC_PROF_LIBUNWIND = null,
             .JEMALLOC_PROF_LIBGCC = null,
             .JEMALLOC_PROF_GCC = null,
-            .JEMALLOC_DSS = null,
+            .JEMALLOC_DSS = if (is_linux) {} else null,
             .JEMALLOC_FILL = {},
             .JEMALLOC_UTRACE = null,
             .JEMALLOC_UTRACE_LABEL = null,
@@ -204,8 +217,8 @@ fn buildStaticLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std
             .CONFIG_LG_SLAB_MAXREGS = null,
             .LG_HUGEPAGE = 21,
             .JEMALLOC_MAPS_COALESCE = {},
-            .JEMALLOC_RETAIN = null,
-            .JEMALLOC_TLS = null,
+            .JEMALLOC_RETAIN = if (is_linux and is64bit(target.result)) {} else null,
+            .JEMALLOC_TLS = if (is_linux) {} else null,
             .JEMALLOC_INTERNAL_UNREACHABLE = .__builtin_unreachable,
             .JEMALLOC_INTERNAL_FFSLL = .__builtin_ffsll,
             .JEMALLOC_INTERNAL_FFSL = .__builtin_ffsl,
@@ -215,16 +228,17 @@ fn buildStaticLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std
             .JEMALLOC_CACHE_OBLIVIOUS = {},
             .JEMALLOC_LOG = null,
             .JEMALLOC_READLINKAT = null,
-            .JEMALLOC_ZONE = {},
+            .JEMALLOC_ZONE = if (is_darwin) {} else null,
             .JEMALLOC_SYSCTL_VM_OVERCOMMIT = null,
-            .JEMALLOC_PROC_SYS_VM_OVERCOMMIT_MEMORY = null,
+            .JEMALLOC_PROC_SYS_VM_OVERCOMMIT_MEMORY = if (is_linux) {} else null,
             .JEMALLOC_HAVE_MADVISE = {},
-            .JEMALLOC_HAVE_MADVISE_HUGE = null,
+            .JEMALLOC_HAVE_MADVISE_HUGE = if (is_linux) {} else null,
             .JEMALLOC_PURGE_MADVISE_FREE = {},
             .JEMALLOC_PURGE_MADVISE_DONTNEED = {},
             .JEMALLOC_PURGE_MADVISE_DONTNEED_ZEROS = null,
             .JEMALLOC_DEFINE_MADVISE_FREE = null,
-            .JEMALLOC_MADVISE_DONTDUMP = null,
+            // Defined if madvise(2) is available but MADV_FREE is not (x86 Linux only).
+            .JEMALLOC_MADVISE_DONTDUMP = if (is_linux and is64bit(target.result)) {} else null,
             .JEMALLOC_MADVISE_NOCORE = null,
             .JEMALLOC_HAVE_MPROTECT = {},
             .JEMALLOC_THP = null,
@@ -232,8 +246,8 @@ fn buildStaticLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std
             .JEMALLOC_PURGE_POSIX_MADVISE_DONTNEED = null,
             .JEMALLOC_PURGE_POSIX_MADVISE_DONTNEED_ZEROS = null,
             .JEMALLOC_HAVE_MEMCNTL = null,
-            .JEMALLOC_HAVE_MALLOC_SIZE = {},
-            .JEMALLOC_HAS_ALLOCA_H = null,
+            .JEMALLOC_HAVE_MALLOC_SIZE = if (is_darwin) {} else null,
+            .JEMALLOC_HAS_ALLOCA_H = if (is_linux) {} else null,
             .JEMALLOC_HAS_RESTRICT = {},
             .JEMALLOC_BIG_ENDIAN = null,
             .LG_SIZEOF_INT = 2,
@@ -244,20 +258,20 @@ fn buildStaticLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std
             .JEMALLOC_GLIBC_MEMALIGN_HOOK = null,
             .JEMALLOC_HAVE_PTHREAD = null,
             .JEMALLOC_HAVE_DLSYM = null,
-            .JEMALLOC_HAVE_PTHREAD_MUTEX_ADAPTIVE_NP = null,
+            .JEMALLOC_HAVE_PTHREAD_MUTEX_ADAPTIVE_NP = if (is_linux) {} else null,
             .JEMALLOC_HAVE_SCHED_GETCPU = null,
-            .JEMALLOC_HAVE_SCHED_SETAFFINITY = null,
-            .JEMALLOC_BACKGROUND_THREAD = null,
+            .JEMALLOC_HAVE_SCHED_SETAFFINITY = if (is_linux) {} else null,
+            .JEMALLOC_BACKGROUND_THREAD = if (is_linux) {} else null,
             .JEMALLOC_EXPORT = null,
             .JEMALLOC_CONFIG_MALLOC_CONF = "",
             .JEMALLOC_IS_MALLOC = null,
-            .JEMALLOC_STRERROR_R_RETURNS_CHAR_WITH_GNU_SOURCE = null,
+            .JEMALLOC_STRERROR_R_RETURNS_CHAR_WITH_GNU_SOURCE = target.result.isGnu(),
             .JEMALLOC_OPT_SAFETY_CHECKS = null,
             .JEMALLOC_ENABLE_CXX = {},
             .JEMALLOC_OPT_SIZE_CHECKS = null,
             .JEMALLOC_UAF_DETECTION = null,
-            .JEMALLOC_HAVE_VM_MAKE_TAG = {},
-            .JEMALLOC_ZERO_REALLOC_DEFAULT_FREE = null,
+            .JEMALLOC_HAVE_VM_MAKE_TAG = if (is_darwin) {} else null,
+            .JEMALLOC_ZERO_REALLOC_DEFAULT_FREE = if (is_linux) {} else null,
         },
     ));
     lib.addIncludePath(b.path("include"));
