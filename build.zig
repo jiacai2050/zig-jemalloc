@@ -50,11 +50,11 @@ fn buildStaticLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std
         .optimize = optimize,
         .link_libc = true,
     });
-    const config_step = b.addSystemCommand(&.{
-        b.pathFromRoot("config.sh"),
-        dep.path("").getPath(b),
-    });
-    lib.step.dependOn(&config_step.step);
+    // const config_step = b.addSystemCommand(&.{
+    //     b.pathFromRoot("config.sh"),
+    //     dep.path("").getPath(b),
+    // });
+    // lib.step.dependOn(&config_step.step);
 
     const dir = try std.fs.cwd().openDir(dep.path("src").getPath(b), .{ .iterate = true });
     var iter = dir.iterate();
@@ -85,11 +85,188 @@ fn buildStaticLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std
             });
         }
     }
-    lib.defineCMacro("JEMALLOC_GLIBC_MALLOC_HOOK", "1");
+    const defs_header = b.addConfigHeader(
+        .{
+            .style = .{ .autoconf = dep.path("include/jemalloc/jemalloc_defs.h.in") },
+            .include_path = "jemalloc/jemalloc_defs.h",
+        },
+        .{
+            .JEMALLOC_HAVE_ATTR = {},
+            .JEMALLOC_HAVE_ATTR_ALLOC_SIZE = {},
+            .JEMALLOC_HAVE_ATTR_FORMAT_ARG = {},
+            .JEMALLOC_HAVE_ATTR_FORMAT_PRINTF = {},
+            .JEMALLOC_HAVE_ATTR_FALLTHROUGH = {},
+            .JEMALLOC_HAVE_ATTR_COLD = {},
+            .JEMALLOC_OVERRIDE_VALLOC = {},
+            .JEMALLOC_USABLE_SIZE_CONST = .@"const",
+            .LG_SIZEOF_PTR = 3,
+            .JEMALLOC_HAVE_ATTR_FORMAT_GNU_PRINTF = null,
+            .JEMALLOC_OVERRIDE_MEMALIGN = null,
+            .JEMALLOC_USE_CXX_THROW = null,
+        },
+    );
+    lib.addConfigHeader(defs_header);
+
+    const macros_header = b.addConfigHeader(
+        .{
+            .style = .{ .cmake = dep.path("include/jemalloc/jemalloc_macros.h.in") },
+            .include_path = "jemalloc/jemalloc_macros.h",
+        },
+        .{
+            .jemalloc_version = "5.3.0",
+            .jemalloc_version_major = 5,
+            .jemalloc_version_minor = 3,
+            .jemalloc_version_bugfix = 0,
+            .jemalloc_version_nrev = 0,
+            .jemalloc_version_gid = "missing",
+            .jemalloc_version_gid_ident = .missing,
+        },
+    );
+    lib.addConfigHeader(macros_header);
+
+    const protos_header = b.addConfigHeader(
+        .{
+            .style = .{ .cmake = dep.path("include/jemalloc/jemalloc_protos.h.in") },
+            .include_path = "jemalloc/jemalloc_protos.h",
+        },
+        .{
+            .install_suffix = .je_,
+            .je_ = .je_,
+        },
+    );
+    lib.addConfigHeader(protos_header);
+
+    const typedefs_header = b.addConfigHeader(
+        .{
+            .style = .{ .cmake = dep.path("include/jemalloc/jemalloc_typedefs.h.in") },
+            .include_path = "jemalloc/jemalloc_typedefs.h",
+        },
+        .{},
+    );
+    lib.addConfigHeader(typedefs_header);
+
+    lib.addConfigHeader(b.addConfigHeader(
+        .{
+            .style = .{ .autoconf = dep.path("include/jemalloc/internal/jemalloc_internal_defs.h.in") },
+        },
+        .{
+            .JEMALLOC_PREFIX = "je_",
+            .JEMALLOC_CPREFIX = "JE_",
+            .JEMALLOC_OVERRIDE___LIBC_CALLOC = null,
+            .JEMALLOC_OVERRIDE___LIBC_FREE = null,
+            .JEMALLOC_OVERRIDE___LIBC_MALLOC = null,
+            .JEMALLOC_OVERRIDE___LIBC_MEMALIGN = null,
+            .JEMALLOC_OVERRIDE___LIBC_REALLOC = null,
+            .JEMALLOC_OVERRIDE___LIBC_VALLOC = null,
+            .JEMALLOC_OVERRIDE___POSIX_MEMALIGN = null,
+            .JEMALLOC_PRIVATE_NAMESPACE = .je_,
+            .CPU_SPINWAIT = .@"__asm__ volatile(\"isb\")",
+            .HAVE_CPU_SPINWAIT = 1,
+            .LG_VADDR = 48,
+            .JEMALLOC_C11_ATOMICS = {},
+            .JEMALLOC_GCC_ATOMIC_ATOMICS = {},
+            .JEMALLOC_GCC_U8_ATOMIC_ATOMICS = {},
+            .JEMALLOC_GCC_SYNC_ATOMICS = {},
+            .JEMALLOC_GCC_U8_SYNC_ATOMICS = {},
+            .JEMALLOC_HAVE_BUILTIN_CLZ = {},
+            .JEMALLOC_OS_UNFAIR_LOCK = {},
+            .JEMALLOC_USE_SYSCALL = null,
+            .JEMALLOC_HAVE_SECURE_GETENV = null,
+            .JEMALLOC_HAVE_ISSETUGID = {},
+            .JEMALLOC_HAVE_PTHREAD_ATFORK = {},
+            .JEMALLOC_HAVE_PTHREAD_SETNAME_NP = null,
+            .JEMALLOC_HAVE_PTHREAD_GETNAME_NP = {},
+            .JEMALLOC_HAVE_PTHREAD_GET_NAME_NP = null,
+            .JEMALLOC_HAVE_CLOCK_MONOTONIC_COARSE = null,
+
+            .JEMALLOC_HAVE_CLOCK_MONOTONIC = null,
+            .JEMALLOC_HAVE_MACH_ABSOLUTE_TIME = {},
+            .JEMALLOC_HAVE_CLOCK_REALTIME = {},
+            .JEMALLOC_MALLOC_THREAD_CLEANUP = null,
+            .JEMALLOC_THREADED_INIT = null,
+            .JEMALLOC_MUTEX_INIT_CB = null,
+            .JEMALLOC_TLS_MODEL = .@"__attribute__((tls_model(\"initial-exec\")))",
+            .JEMALLOC_DEBUG = null,
+            .JEMALLOC_STATS = {},
+            .JEMALLOC_EXPERIMENTAL_SMALLOCX_API = null,
+            .JEMALLOC_PROF = null,
+            .JEMALLOC_PROF_LIBUNWIND = null,
+            .JEMALLOC_PROF_LIBGCC = null,
+            .JEMALLOC_PROF_GCC = null,
+            .JEMALLOC_DSS = null,
+            .JEMALLOC_FILL = {},
+            .JEMALLOC_UTRACE = null,
+            .JEMALLOC_UTRACE_LABEL = null,
+            .JEMALLOC_XMALLOC = null,
+            .JEMALLOC_LAZY_LOCK = null,
+            .LG_QUANTUM = null,
+            .LG_PAGE = 14,
+            .CONFIG_LG_SLAB_MAXREGS = null,
+            .LG_HUGEPAGE = 21,
+            .JEMALLOC_MAPS_COALESCE = {},
+            .JEMALLOC_RETAIN = null,
+            .JEMALLOC_TLS = null,
+            .JEMALLOC_INTERNAL_UNREACHABLE = .__builtin_unreachable,
+            .JEMALLOC_INTERNAL_FFSLL = .__builtin_ffsll,
+            .JEMALLOC_INTERNAL_FFSL = .__builtin_ffsl,
+            .JEMALLOC_INTERNAL_FFS = .__builtin_ffs,
+            .JEMALLOC_INTERNAL_POPCOUNTL = .__builtin_popcountl,
+            .JEMALLOC_INTERNAL_POPCOUNT = .__builtin_popcount,
+            .JEMALLOC_CACHE_OBLIVIOUS = {},
+            .JEMALLOC_LOG = null,
+            .JEMALLOC_READLINKAT = null,
+            .JEMALLOC_ZONE = {},
+            .JEMALLOC_SYSCTL_VM_OVERCOMMIT = null,
+            .JEMALLOC_PROC_SYS_VM_OVERCOMMIT_MEMORY = null,
+            .JEMALLOC_HAVE_MADVISE = {},
+            .JEMALLOC_HAVE_MADVISE_HUGE = null,
+            .JEMALLOC_PURGE_MADVISE_FREE = {},
+            .JEMALLOC_PURGE_MADVISE_DONTNEED = {},
+            .JEMALLOC_PURGE_MADVISE_DONTNEED_ZEROS = null,
+            .JEMALLOC_DEFINE_MADVISE_FREE = null,
+            .JEMALLOC_MADVISE_DONTDUMP = null,
+            .JEMALLOC_MADVISE_NOCORE = null,
+            .JEMALLOC_HAVE_MPROTECT = {},
+            .JEMALLOC_THP = null,
+            .JEMALLOC_HAVE_POSIX_MADVISE = null,
+            .JEMALLOC_PURGE_POSIX_MADVISE_DONTNEED = null,
+            .JEMALLOC_PURGE_POSIX_MADVISE_DONTNEED_ZEROS = null,
+            .JEMALLOC_HAVE_MEMCNTL = null,
+            .JEMALLOC_HAVE_MALLOC_SIZE = {},
+            .JEMALLOC_HAS_ALLOCA_H = null,
+            .JEMALLOC_HAS_RESTRICT = {},
+            .JEMALLOC_BIG_ENDIAN = null,
+            .LG_SIZEOF_INT = 2,
+            .LG_SIZEOF_LONG = 3,
+            .LG_SIZEOF_LONG_LONG = 3,
+            .LG_SIZEOF_INTMAX_T = 3,
+            .JEMALLOC_GLIBC_MALLOC_HOOK = null,
+            .JEMALLOC_GLIBC_MEMALIGN_HOOK = null,
+            .JEMALLOC_HAVE_PTHREAD = null,
+            .JEMALLOC_HAVE_DLSYM = null,
+            .JEMALLOC_HAVE_PTHREAD_MUTEX_ADAPTIVE_NP = null,
+            .JEMALLOC_HAVE_SCHED_GETCPU = null,
+            .JEMALLOC_HAVE_SCHED_SETAFFINITY = null,
+            .JEMALLOC_BACKGROUND_THREAD = null,
+            .JEMALLOC_EXPORT = null,
+            .JEMALLOC_CONFIG_MALLOC_CONF = "",
+            .JEMALLOC_IS_MALLOC = null,
+            .JEMALLOC_STRERROR_R_RETURNS_CHAR_WITH_GNU_SOURCE = null,
+            .JEMALLOC_OPT_SAFETY_CHECKS = null,
+            .JEMALLOC_ENABLE_CXX = {},
+            .JEMALLOC_OPT_SIZE_CHECKS = null,
+            .JEMALLOC_UAF_DETECTION = null,
+            .JEMALLOC_HAVE_VM_MAKE_TAG = {},
+            .JEMALLOC_ZERO_REALLOC_DEFAULT_FREE = null,
+        },
+    ));
+    lib.addIncludePath(b.path("include"));
     lib.addIncludePath(dep.path("include"));
-    lib.installHeader(dep.path("include/jemalloc/jemalloc.h"), "jemalloc/jemalloc.h");
-    // lib.installHeadersDirectory(dep.path("include/jemalloc"), "jemalloc", .{});
-    // lib.installHeadersDirectory(dep.path("include/curl"), "curl", .{});
+    lib.installHeader(b.path("include/jemalloc/jemalloc.h"), "jemalloc/jemalloc.h");
+    lib.installHeader(typedefs_header.getOutput(), "jemalloc/jemalloc_typedefs.h");
+    lib.installHeader(protos_header.getOutput(), "jemalloc/jemalloc_protos.h");
+    lib.installHeader(macros_header.getOutput(), "jemalloc/jemalloc_macros.h");
+    lib.installHeader(defs_header.getOutput(), "jemalloc/jemalloc_defs.h");
 
     return lib;
 }
