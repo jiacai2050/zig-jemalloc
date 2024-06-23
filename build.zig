@@ -275,7 +275,9 @@ fn buildStaticLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std
             .JEMALLOC_ZERO_REALLOC_DEFAULT_FREE = if (is_linux) {} else null,
         },
     ));
-    lib.defineCMacro("_GNU_SOURCE", null);
+    if (is_linux) {
+        lib.defineCMacro("_GNU_SOURCE", null);
+    }
     lib.addIncludePath(b.path("include"));
     lib.addIncludePath(dep.path("include"));
     lib.installHeader(b.path("include/jemalloc/jemalloc.h"), "jemalloc/jemalloc.h");
