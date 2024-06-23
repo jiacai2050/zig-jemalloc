@@ -58,6 +58,7 @@ fn buildStaticLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std
         .optimize = optimize,
         .link_libc = true,
     });
+
     const is_darwin = target.result.isDarwin();
     const is_linux = isLinux(target.result);
     // const config_step = b.addSystemCommand(&.{
@@ -185,11 +186,11 @@ fn buildStaticLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std
             .JEMALLOC_HAVE_BUILTIN_CLZ = {},
             .JEMALLOC_OS_UNFAIR_LOCK = if (is_darwin) {} else null,
             .JEMALLOC_USE_SYSCALL = if (is_linux) {} else null,
-            .JEMALLOC_HAVE_SECURE_GETENV = null,
+            .JEMALLOC_HAVE_SECURE_GETENV = if (is_linux) {} else null,
             .JEMALLOC_HAVE_ISSETUGID = if (is_darwin) {} else null,
             .JEMALLOC_HAVE_PTHREAD_ATFORK = {},
-            .JEMALLOC_HAVE_PTHREAD_SETNAME_NP = null,
-            .JEMALLOC_HAVE_PTHREAD_GETNAME_NP = if (is_darwin) {} else null,
+            .JEMALLOC_HAVE_PTHREAD_SETNAME_NP = if (is_linux) {} else null,
+            .JEMALLOC_HAVE_PTHREAD_GETNAME_NP = {},
             .JEMALLOC_HAVE_PTHREAD_GET_NAME_NP = null,
             .JEMALLOC_HAVE_CLOCK_MONOTONIC_COARSE = if (is_linux) {} else null,
             .JEMALLOC_HAVE_CLOCK_MONOTONIC = if (is_linux) {} else null,
@@ -235,7 +236,7 @@ fn buildStaticLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std
             .JEMALLOC_HAVE_MADVISE_HUGE = if (is_linux) {} else null,
             .JEMALLOC_PURGE_MADVISE_FREE = {},
             .JEMALLOC_PURGE_MADVISE_DONTNEED = {},
-            .JEMALLOC_PURGE_MADVISE_DONTNEED_ZEROS = null,
+            .JEMALLOC_PURGE_MADVISE_DONTNEED_ZEROS = if (is_linux) {} else null,
             .JEMALLOC_DEFINE_MADVISE_FREE = null,
             // Defined if madvise(2) is available but MADV_FREE is not (x86 Linux only).
             .JEMALLOC_MADVISE_DONTDUMP = if (is_linux and is64bit(target.result)) {} else null,
@@ -256,10 +257,10 @@ fn buildStaticLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std
             .LG_SIZEOF_INTMAX_T = 3,
             .JEMALLOC_GLIBC_MALLOC_HOOK = null,
             .JEMALLOC_GLIBC_MEMALIGN_HOOK = null,
-            .JEMALLOC_HAVE_PTHREAD = null,
-            .JEMALLOC_HAVE_DLSYM = null,
+            .JEMALLOC_HAVE_PTHREAD = if (is_linux) {} else null,
+            .JEMALLOC_HAVE_DLSYM = if (is_linux) {} else null,
             .JEMALLOC_HAVE_PTHREAD_MUTEX_ADAPTIVE_NP = if (is_linux) {} else null,
-            .JEMALLOC_HAVE_SCHED_GETCPU = null,
+            .JEMALLOC_HAVE_SCHED_GETCPU = if (is_linux) {} else null,
             .JEMALLOC_HAVE_SCHED_SETAFFINITY = if (is_linux) {} else null,
             .JEMALLOC_BACKGROUND_THREAD = if (is_linux) {} else null,
             .JEMALLOC_EXPORT = null,
@@ -267,13 +268,14 @@ fn buildStaticLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std
             .JEMALLOC_IS_MALLOC = null,
             .JEMALLOC_STRERROR_R_RETURNS_CHAR_WITH_GNU_SOURCE = target.result.isGnu(),
             .JEMALLOC_OPT_SAFETY_CHECKS = null,
-            .JEMALLOC_ENABLE_CXX = {},
+            .JEMALLOC_ENABLE_CXX = null,
             .JEMALLOC_OPT_SIZE_CHECKS = null,
             .JEMALLOC_UAF_DETECTION = null,
             .JEMALLOC_HAVE_VM_MAKE_TAG = if (is_darwin) {} else null,
             .JEMALLOC_ZERO_REALLOC_DEFAULT_FREE = if (is_linux) {} else null,
         },
     ));
+    lib.defineCMacro("_GNU_SOURCE", null);
     lib.addIncludePath(b.path("include"));
     lib.addIncludePath(dep.path("include"));
     lib.installHeader(b.path("include/jemalloc/jemalloc.h"), "jemalloc/jemalloc.h");
