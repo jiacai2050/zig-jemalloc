@@ -1,10 +1,16 @@
 .{
     .name = "zig-jemalloc",
     .version = "0.1.0",
-    .dependencies = .{},
+    .dependencies = .{
+        .jemalloc = .{
+            .url = "https://github.com/jemalloc/jemalloc/archive/refs/tags/5.3.0.tar.gz",
+            .hash = "1220018d05b405d30affa14b7e876e05dc8d7c40480653607ae60bbff48bcee28d96",
+            .lazy = true,
+        },
+    },
     .paths = .{
         "src",
-        "libs",
+        "config.sh",
         "build.zig",
         "build.zig.zon",
         "README.org",
