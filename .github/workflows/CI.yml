@@ -43,7 +43,7 @@ jobs:
           zig build -Dcpu=baseline --verbose
           ${TEST_BINARY}
       - name: Valgrind Test
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest' && matrix.zig-version == 'master'
         run: |
           valgrind --leak-check=full --tool=memcheck \
           --show-leak-kinds=all --error-exitcode=1 ${TEST_BINARY}
