@@ -58,7 +58,7 @@ test "basic alloc" {
     const ptr = try allocator.create(struct { a: i8, b: u64 });
     allocator.destroy(ptr);
 
-    collectMallocStats(std.io.getStdErr().writer(), null);
+    // collectMallocStats(std.io.getStdErr().writer(), null);
 }
 
 test "alloc ArrayList" {
@@ -78,7 +78,7 @@ test "realloc" {
 
     // in-place realloc
     const usable_size = c.je_malloc_usable_size(ptr);
-    const ptr2: [*]u8 = @ptrCast(c.je_realloc(ptr, usable_size - size).?);
+    const ptr2: [*]u8 = @ptrCast(c.je_realloc(ptr, usable_size).?);
     try std.testing.expectEqual(ptr2, ptr);
 
     // out-of-place realloc
