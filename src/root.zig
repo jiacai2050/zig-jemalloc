@@ -78,7 +78,6 @@ test "realloc" {
 
     // in-place realloc
     const usable_size = c.je_malloc_usable_size(ptr);
-    std.debug.print("usable_size: {d}\n", .{usable_size});
     const ptr2: [*]u8 = @ptrCast(c.je_realloc(ptr, usable_size).?);
     try std.testing.expectEqual(ptr2, ptr);
 

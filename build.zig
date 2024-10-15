@@ -58,14 +58,11 @@ fn buildStaticLib(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std
         .optimize = optimize,
         .link_libc = true,
     });
+    // sanitize will cause Illegal instruction when call je_realloc, so disable it now.
+    lib.root_module.sanitize_c = false;
 
     const is_darwin = target.result.isDarwin();
     const is_linux = isLinux(target.result);
-    // const config_step = b.addSystemCommand(&.{
-    //     b.pathFromRoot("config.sh"),
-    //     dep.path("").getPath(b),
-    // });
-    // lib.step.dependOn(&config_step.step);
 
     const dir = try std.fs.cwd().openDir(dep.path("src").getPath(b), .{ .iterate = true });
     var iter = dir.iterate();
