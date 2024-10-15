@@ -27,11 +27,12 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
+        zig-version: [0.13.0, master]
     steps:
       - uses: actions/checkout@v4
-      - uses: goto-bus-stop/setup-zig@v2
+      - uses: mlugg/setup-zig@v1
         with:
-          version: master
+          version: ${{ matrix.zig-version }}
       - name: Install deps(Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: |

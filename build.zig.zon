@@ -10,7 +10,6 @@
     },
     .paths = .{
         "src",
-        "config.sh",
         "build.zig",
         "build.zig.zon",
         "README.org",
